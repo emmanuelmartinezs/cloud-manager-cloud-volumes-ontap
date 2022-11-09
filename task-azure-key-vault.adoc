@@ -96,7 +96,17 @@ The outlined steps capture how to register your Cloud Volumes ONTAP configuratio
 . Locate the **Key Identifier** field. Copy the URI up to but not including the hexadecimal string. **#keep note / important#**
 
 [[AAD]]
-.Create an Azure Active Directory Endpoint (HA only)
+.Endpoint Configuration Options
+
+NetApp solution provides granularity to create Azure AD Endopoint (HA only) or Private Endpoint (Privatelink) to configure Azure Key Vault.
+
+* <<AAD-A>>
+* <<PE-B>>
+
+
+
+[[AAD-A]]
+.Option A - Azure Active Directory Endpoint - HA CVO only (Create AD EP)
 . This process is only required if you are configuring Azure Key Vault for an HA Cloud Volumes ONTAP Working Environment.
 . In the Azure portal navigate to **Virtual Networks**.
 . Select the Virtual Network where you deployed the Cloud Volumes ONTAP working environment and select the **Subnets** menu on the left side of the page.
@@ -109,6 +119,60 @@ The outlined steps capture how to register your Cloud Volumes ONTAP configuratio
 ** image:service_endpoints_services.png[A screenshot from all Service Endpoints Services needed.]
 
 . Select **Save** to capture your settings.
+
+
+[[PE-B]]
+.Option B - Private Endpoint (HA or Single CVO)
+. This process is only required if you are configuring Private Endpoint for an HA or Single Cloud Volumes ONTAP Working Environment.
+. In the Azure portal navigate to **Key vaults**.
+. Select the Key vault created above (<<create-akv>>).
+
+    ** image:key-vaults-key.png[A screenshot from Key Vault.]
+
+. Select **Networking**, then navigate to **Private endopoint connections** in your Key Vault.
+
+    ** image:key-vaults-pec.png[A screenshot from Key Vault Networking PEC.]
+
+. Select **Create** and follow your Basics Project and Instance details, 
+
+    ** image:PE-Basics.png[A screenshot from PE Basics steps.]
+
+. On **Resources** select the below, 
+
+    ** *Subscription* - Where you deployed the Cloud Volumes ONTAP working environment 
+    ** *Resource type* - Microsoft.KeyVault/vaults
+    ** *Resource* - Key vault created above (<<create-akv>>)
+    ** *Target sub-resource* - vault
+
+    ** image:PE-Resources.png[A screenshot from PE Resources steps.]   
+
+. On **Virtual Network** select your Virtual network where you deployed the Cloud Volumes ONTAP working environment. 
+
+    ** image:PE-VN.png[A screenshot from PE Virtual network steps.]        
+
+. On **Virtual Network** select your Virtual network where you deployed the Cloud Volumes ONTAP working environment. 
+
+    ** image:PE-dns.png[A screenshot from PE DNS.]  
+
+. Over **Tags**, use as you need (Optional).
+
+. Select **Next: Review + create** to Validte.
+
+    ** image:PE-validation.png[A screenshot from PE DNS.] 
+
+. Last, **Create**, 
+    
+    ** You can validate on *Key vaults* > *"Your KV"* > *Networking* > *Private Endpoint connections*
+    ** image:PE-Created.png[A screenshot from PE DNS.] 
+    ** CLI validation (E.g., below)
+
+`getxxbyyy getaddrinfo -node AKVdocValidation-01 -vserver svm_AKVdocValidation -hostname AKV-PE-Test.vault.azure.net`
+
+(vserver services name-service getxxbyyy getaddrinfo)
+*Host name:* AKV-PE-Test.vault.azure.net
+*Canonical Name:* AKV-PE-Test.privatelink.vaultcore.azure.net
+*IPv4:* 10.183.32.22
+
 
 [[ontap]]
 .Cloud Volumes ONTAP configuration
