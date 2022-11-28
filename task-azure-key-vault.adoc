@@ -15,7 +15,7 @@ AKV can be used to protect link:https://docs.netapp.com/us-en/ontap/configure-ne
 
 Key management with AKV can be enabled with the CLI or the ONTAP REST API.
 
-When using AKV, be aware that by default a data SVM LIF is used to communicate with the cloud key management endpoint. A node management network is used to communicate with the cloud provider's authentication services (login.microsoftonline.com). If the cluster network is not configured correctly, the cluster will not properly utilize the key management service.
+When using AKV, be aware that by default a data SVM LIF is used to communicate with the cloud key management endpoint. A node management network is used to communicate with the cloud provider's authentication services (login.microsoftonline.com). __If the cluster network is not configured correctly, the cluster will not properly utilize the key management service.__
 
 .Prerequisites
 * Cloud Volumes ONTAP must be running version 9.10.1 or later
@@ -40,30 +40,35 @@ The outlined steps capture how to register your Cloud Volumes ONTAP configuratio
 
 [[azure-app]]
 .Azure Application Registration
-. You must first register your application in the Azure subscription that you want the Cloud Volumes ONTAP to use for access the Azure Key Vault. Within the Azure portal, select **App registrations**.
+You must first register your application in the Azure subscription that you want the Cloud Volumes ONTAP to use to access the Azure Key Vault. To do that, follow these steps:
+
+. Within the Azure portal, select **App registrations**.
 . Select **New registration**.
 . Provide a name for your application and select a supported application type. The default single tenant suffices for Azure Key Vault usage. Select **Register**.
-. In the Azure Overview window, select the application you have registered. Copy the **application (client) ID** and the **directory (tenant) ID** to a secure location. They will be required later in the registration process. **#keep note / important#**
+. In the Azure Overview window, select the application you have registered. #Copy# the **application (client) ID** and the **directory (tenant) ID** to a secure location. They will be required later in the registration process.
 
 [[secret]]
 .Create Azure client secret
-. In the Azure portal for your Cloud Volumes ONTAP application, select the **Ceritificates & secrets** pane.
+Now that you have created an Azure application, create a client secret for it: 
+
+. In the Azure portal for your Cloud Volumes ONTAP application, select the **Certificates & secrets** pane.
 . Select **New client secret** Enter a meaningful name for your client secret. NetApp recommends a 24-month expiration period, however your specific cloud governance policies may require a different setting.
-. Select **Add** to save the client secret.	Immediately copy the **Value** of the secret and store it somewhere secure for future configuration. The secret value will not be displayed after you navigate away from the page. **#keep note / important#**
+. Select **Add** to save the client secret.	Immediately #copy# the **Value** of the secret and store it somewhere secure for future configuration. __The secret value will not be displayed after you navigate away from the page.__
 
 [[create-akv]]
 .Create an Azure Key Vault
-. If you have an existing Azure Key Vault, you can connect it to your Cloud Volumes ONTAP configuration, however you must adapt the access policies to the settings in this process.
+If you have an existing Azure Key Vault, you can connect it to your Cloud Volumes ONTAP configuration, however you must adapt the access policies to the settings in this process. To do that, follow these steps:
+
 . In the Azure portal, navigate to the **Key Vaults** section.
-. Select **Create**. Enter the required information including resource group, region and pricing tier and make selections for the days to retain deleted vaults and whether or not purge protection is enabled. For the purposes of this configuration, defaults are sufficient, however your specific cloud governance policies may require different settings.
+. Select **Create**. Enter the required information including resource group, region and pricing tier and make selections for the days to retain deleted vaults and whether or not purge protection is enabled. For most use cases the defaults are sufficient, however your specific cloud governance policies may require different settings.
 . Select **Next** to choose an access policy.
-. Select **Azure Disk Encryption** for the volume encryption option and **Vault access policy** for the permission model.
-. Select **Add Access Policy**.
-. Select the caret adjacent to the **Configure from template (optional)** field. Then, select **Key, Secret, & Certification Management.**
+. Select **Vault access policy** for the permission model and **Azure Disk Encryption** for the volume encryption option.
+. Under the Access Policies, select **Create**.
+. From the **Configure from template** __(optional)__ pull down, select **Key, Secret, & Certification Management.**
 . Choose each of the drop-down permissions menus (key, secret, certificate) and then **Select all ** at the top of the menu list to select all the permissions available. You should have:
-** **Key permissions**: 20 selected
-** **Secret permissions**: 8 selected
-** **Certificate permissions**: 16 selected
+** **Key permissions**: __Select all.__
+** **Secret permissions**: __Select all.__
+** **Certificate permissions**: __Select all.__
 
 *** Select all: Key permissions, Secret permissions and Certificate permissions.
 
@@ -75,10 +80,11 @@ The outlined steps capture how to register your Cloud Volumes ONTAP configuratio
 
 ** image:key_secret_cert_principal.png[A screenshot of the Permissions from a template - Key, Secret, & Certificate Management.]
 
-. Select **Add** to create the access policy.
+. Application (optional)
+. Select **Create** to create the access policy.
 . Select **Next** to advance to **Networking** options.
-. Choose the appropriate network access method or select **All networks** and **Review + Create** to create the key vault. (Network access method may be prescribed by a governance policy or your corporate cloud security team.)
-. Record the Key Vault URI: In the key vault you created, navigate to the Overview menu and copy the **Vault URI** from the right-hand column. You will need this for a later step. **#keep note / important#**
+. Choose the appropriate network access method or select **All networks** and finally, select **Review + Create**, then **Create** to create the key vault. (Network access method may be prescribed by a governance policy or your corporate cloud security team.)
+. Record the Key Vault URI: Navigate to the key vault you just created, (__there is a convenience “Go To resource” button from the Key Vault deployment page.__). From the Overview menu and #copy# the **Vault URI** from the right-hand column. You will need this for a later step.
 
 [[key]]
 .Create encryption key
@@ -93,7 +99,7 @@ The outlined steps capture how to register your Cloud Volumes ONTAP configuratio
 . Select **Create** to create the encryption key.
 . Return to the **Keys** menu and select the key you just created.
 . Select the key ID under **Current version** to view the key properties.
-. Locate the **Key Identifier** field. Copy the URI up to but not including the hexadecimal string. **#keep note / important#**
+. Locate the **Key Identifier** field. #Copy# the URI up to the last slash, therefore excluding the hexadecimal string at the end. 
 
 [[AAD]]
 .Endpoint Configuration Options
@@ -123,21 +129,22 @@ NetApp solution provides granularity to create Azure AD Endopoint (HA only) or P
 
 [[PE-B]]
 .Option B - Private Endpoint (HA or Single CVO)
-. This process is only required if you are configuring Private Endpoint for an HA or Single Cloud Volumes ONTAP Working Environment.
+This process is only required if you are configuring Private Endpoint for an HA or Single Cloud Volumes ONTAP Working Environment.
+
 . In the Azure portal navigate to **Key vaults**.
 . Select the Key vault created above (<<create-akv>>).
 
     ** image:key-vaults-key.png[A screenshot from Key Vault.]
 
-. Select **Networking**, then navigate to **Private endopoint connections** in your Key Vault.
+. Select **Networking**, then navigate to **Private endpoint connections** in your Key Vault.
 
     ** image:key-vaults-pec.png[A screenshot from Key Vault Networking PEC.]
 
-. Select **Create** and follow your Basics Project and Instance details, 
+. Select **Create** and enter your Basics Project and Instance details, and select **Next**. 
 
     ** image:PE-Basics.png[A screenshot from PE Basics steps.]
 
-. On **Resources** select the below, 
+. On **Resources** select the below and select **Next**, 
 
     ** *Subscription* - Where you deployed the Cloud Volumes ONTAP working environment 
     ** *Resource type* - Microsoft.KeyVault/vaults
@@ -146,25 +153,28 @@ NetApp solution provides granularity to create Azure AD Endopoint (HA only) or P
 
     ** image:PE-Resources.png[A screenshot from PE Resources steps.]   
 
-. On **Virtual Network** select your Virtual network where you deployed the Cloud Volumes ONTAP working environment. 
+. On **Virtual Network** select your Virtual network where you deployed the Cloud Volumes ONTAP working environment and select **Next**. 
 
     ** image:PE-VN.png[A screenshot from PE Virtual network steps.]        
 
-. On **Virtual Network** select your Virtual network where you deployed the Cloud Volumes ONTAP working environment. 
+. On **DNS** private DNS zone is enabled by default. Select your Subscription and Resources group for your Private DNS intergation. 
 
     ** image:PE-dns.png[A screenshot from PE DNS.]  
 
-. Over **Tags**, use as you need (Optional).
+. On **Tags**, enter any tags you need (Optional), and select **Next**.
 
-. Select **Next: Review + create** to Validte.
+. Review and validate everything is correct.
 
     ** image:PE-validation.png[A screenshot from PE DNS.] 
 
 . Last, **Create**, 
     
-    ** You can validate on *Key vaults* > *"Your KV"* > *Networking* > *Private Endpoint connections*
-    ** image:PE-Created.png[A screenshot from PE DNS.] 
-    ** CLI validation (E.g., below)
+
+In addition, you can validate your Private Endpoing in Azure portal, to do that, follow these steps: 
+
+    ** *Key vaults* > *"Your KV"* > *Networking* > *Private Endpoint connections*
+        image:PE-Created.png[A screenshot from PE DNS.] 
+    ** Or validate your Private Endpoint by using CLI (shell command below)
 
 `getxxbyyy getaddrinfo -node AKVdocValidation-01 -vserver svm_AKVdocValidation -hostname AKV-PE-Test.vault.azure.net`
 
@@ -178,10 +188,10 @@ NetApp solution provides granularity to create Azure AD Endopoint (HA only) or P
 .Cloud Volumes ONTAP configuration
 . Connect to the cluster management LIF with your preferred SSH client.
 . Enter the advanced privilege mode in ONTAP:
-`set advanced -con off`
+`set advanced`
 . Identify the desired data SVM and verify its DNS configuration:
 `vserver services name-service dns show`
-.. If a DNS entry for the desired data SVM exists and it contains an entry for the Azure DNS, then no action is required. If it does not, add a DNS server entry for the data SVM that points to the Azure DNS, private DNS, or on-premise server.  This should match the entry for the cluster admin SVM:
+.. If a DNS entry for the desired data SVM exists and it contains an entry for the Azure DNS, then no action is required. If it does not, add a DNS server entry for the data SVM that points to the Azure DNS, private DNS, or on-premises server.  This should match the entry for the cluster admin SVM:
 `vserver services name-service dns create -vserver _SVM_name_ -domains _domain_ -name-servers _IP_address_`
 .. Verify the DNS service has been created for the data SVM:
 `vserver services name-service dns show`
